@@ -27,9 +27,9 @@ A clean, minimalist personal marks tracking web application designed specificall
   - Bar chart showing marks obtained versus maximum paper marks over time.
 - **Local Storage & Data Portability**:
   - Data persists automatically in browser local storage.
+  - **Clean Slate**: Starts completely clean with 0 fake marks—only your actual test scores.
   - **Export to JSON** backup file anytime.
   - **Import / Restore** from JSON backup file.
-  - 1-click **Sample Data** loader to immediately test analytics.
 
 ---
 

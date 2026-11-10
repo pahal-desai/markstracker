@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TestEntry, CategoryFilter } from './types';
-import { SAMPLE_TESTS } from './data/mockData';
 import { calculateSubjectStats } from './utils/calculations';
 import { QuickStats } from './components/stats/QuickStats';
 import { StrongWeakCard } from './components/stats/StrongWeakCard';
@@ -13,27 +12,32 @@ import {
   Plus,
   Download,
   Upload,
-  Sparkles,
   BarChart2,
   Trash2,
   CheckCircle2,
-  GraduationCap
+  GraduationCap,
+  BookOpen
 } from 'lucide-react';
 
-const STORAGE_KEY = 'markstracker_tests_data_v1';
+const STORAGE_KEY = 'markstracker_tests_data_v2';
 
 export const App: React.FC = () => {
-  // Load initial tests from localStorage or initialize with sample tests
+  // Load initial tests from localStorage (strictly real user tests, zero fake marks)
   const [tests, setTests] = useState<TestEntry[]>(() => {
     try {
+      // Clear any legacy v1 key with sample data
+      localStorage.removeItem('markstracker_tests_data_v1');
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
       }
     } catch (e) {
       console.error('Failed to load tests from localStorage', e);
     }
-    return SAMPLE_TESTS;
+    return [];
   });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -88,6 +92,10 @@ export const App: React.FC = () => {
 
   // Export JSON file
   const handleExportJSON = () => {
+    if (tests.length === 0) {
+      showToast('No test records to export yet');
+      return;
+    }
     const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
       JSON.stringify(tests, null, 2)
     )}`;
@@ -111,7 +119,7 @@ export const App: React.FC = () => {
         const parsed = JSON.parse(event.target?.result as string);
         if (Array.isArray(parsed)) {
           setTests(parsed);
-          showToast(`Imported ${parsed.length} tests successfully`);
+          showToast(`Imported ${parsed.length} test records successfully`);
         } else {
           showToast('Invalid backup file format');
         }
@@ -121,11 +129,6 @@ export const App: React.FC = () => {
     };
     reader.readAsText(file);
     if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-  const handleLoadSampleData = () => {
-    setTests(SAMPLE_TESTS);
-    showToast('Loaded 8 sample tests (Milestone & AITS)');
   };
 
   const handleClearAllData = () => {
@@ -170,16 +173,15 @@ export const App: React.FC = () => {
             </div>
           </div>
 
-          {/* Quick Action Header Buttons */}
+          {/* Action Buttons */}
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleOpenCreate}
-              className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold rounded-lg shadow-xs flex items-center gap-1.5 transition-all"
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold rounded-lg shadow-xs flex items-center gap-1.5 transition-all"
             >
               <Plus className="w-4 h-4" />
-              <span className="hidden xs:inline">Add Test</span>
-              <span className="xs:hidden">Add</span>
+              <span>Add Test</span>
             </button>
 
             {/* Hidden file input for import */}
@@ -212,16 +214,7 @@ export const App: React.FC = () => {
                 <span className="hidden lg:inline">Restore</span>
               </button>
 
-              {tests.length === 0 ? (
-                <button
-                  type="button"
-                  onClick={handleLoadSampleData}
-                  className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-                  Load Sample
-                </button>
-              ) : (
+              {tests.length > 0 && (
                 <button
                   type="button"
                   onClick={handleClearAllData}
@@ -238,6 +231,54 @@ export const App: React.FC = () => {
 
       {/* Main Content Dashboard */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1 space-y-6">
+        {/* Welcome Empty State Banner when no tests are logged yet */}
+        {tests.length === 0 && (
+          <div className="bg-gradient-to-r from-indigo-900 to-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-sm">
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-200 text-xs font-semibold mb-3 border border-indigo-500/30">
+                <BookOpen className="w-3.5 h-3.5" />
+                Ready to track your tests
+              </div>
+              <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">
+                No marks logged yet. Start recording your tests!
+              </h2>
+              <p className="text-sm text-slate-300 mt-2 leading-relaxed">
+                Log your test scores across <strong>Milestone</strong> and <strong>AITS</strong> (Main &amp; Advanced). The dashboard will automatically calculate your subject strengths, weak spots, and test score progressions.
+              </p>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-5 text-xs">
+                <div className="bg-white/10 rounded-lg p-2.5 border border-white/10">
+                  <div className="font-bold text-indigo-300">Milestone Main</div>
+                  <div className="text-[11px] text-slate-300 mt-0.5">300 M (100 each)</div>
+                </div>
+                <div className="bg-white/10 rounded-lg p-2.5 border border-white/10">
+                  <div className="font-bold text-purple-300">Milestone Adv</div>
+                  <div className="text-[11px] text-slate-300 mt-0.5">~360 M (Variable)</div>
+                </div>
+                <div className="bg-white/10 rounded-lg p-2.5 border border-white/10">
+                  <div className="font-bold text-amber-300">AITS Main</div>
+                  <div className="text-[11px] text-slate-300 mt-0.5">300 M (100 each)</div>
+                </div>
+                <div className="bg-white/10 rounded-lg p-2.5 border border-white/10">
+                  <div className="font-bold text-orange-300">AITS Adv</div>
+                  <div className="text-[11px] text-slate-300 mt-0.5">~360 M (Variable)</div>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <button
+                  type="button"
+                  onClick={handleOpenCreate}
+                  className="px-5 py-2.5 bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs rounded-xl shadow-sm inline-flex items-center gap-2 transition-all active:scale-95"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Your First Test
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Quick Top Stats Cards */}
         <QuickStats tests={tests} />
 
@@ -321,18 +362,18 @@ export const App: React.FC = () => {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={handleLoadSampleData}
-              className="text-indigo-600 hover:underline font-medium"
-            >
-              Reset to Sample Data
-            </button>
-            <span>•</span>
-            <button
-              type="button"
               onClick={handleExportJSON}
               className="text-slate-600 hover:underline font-medium"
             >
               Download Backup
+            </button>
+            <span>•</span>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="text-slate-600 hover:underline font-medium"
+            >
+              Restore Backup
             </button>
           </div>
         </div>

@@ -33,7 +33,13 @@ export const TotalMarksChart: React.FC<Props> = ({ tests, selectedCategory }) =>
   const sorted = sortTestsByDate(filtered, true);
 
   if (sorted.length === 0) {
-    return null;
+    return (
+      <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500 shadow-sm flex flex-col items-center justify-center min-h-[300px]">
+        <Target className="w-10 h-10 text-slate-300 mb-2" />
+        <p className="font-medium text-slate-700">No test scores recorded yet</p>
+        <p className="text-xs text-slate-400 mt-1">Total score vs maximum paper marks will appear here</p>
+      </div>
+    );
   }
 
   const labels = sorted.map(t => {

@@ -30,6 +30,18 @@ interface Props {
 export const CategoryComparisonChart: React.FC<Props> = ({ tests }) => {
   const [viewMode, setViewMode] = useState<'avg_pct' | 'avg_marks' | 'total_marks'>('avg_pct');
 
+  if (tests.length === 0) {
+    return (
+      <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-500 shadow-sm flex flex-col items-center justify-center min-h-[200px]">
+        <Layers className="w-10 h-10 text-slate-300 mb-2" />
+        <p className="font-semibold text-slate-700">Category-wise Subject Breakdown</p>
+        <p className="text-xs text-slate-400 mt-1 max-w-md">
+          Once you log your test marks, this graph will compare Physics, Chemistry, and Mathematics performance across Milestone Main/Adv and AITS Main/Adv.
+        </p>
+      </div>
+    );
+  }
+
   const summaries = getCategorySummaries(tests);
 
   // Calculate cumulative total marks scored in each subject for each category
